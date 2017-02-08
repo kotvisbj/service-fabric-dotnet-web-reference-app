@@ -11,8 +11,10 @@ namespace CustomerOrder.Domain
 
     public interface ICustomerOrderActor : IActor
     {
+        Task AddItemToOrderAsync(CustomerOrderItem orderItem);
+
         Task<string> GetOrderStatusAsStringAsync();
 
-        Task SubmitOrderAsync(IEnumerable<CustomerOrderItem> orderList);
+        Task SubmitOrderAsync();
     }
 }

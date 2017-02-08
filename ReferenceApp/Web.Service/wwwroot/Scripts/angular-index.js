@@ -36,6 +36,23 @@
             // Called when a user adds item(s) to cart.
             $scope.submit = function (row) {
 
+                if (!$scope.orderId) {
+                    $http.get('/fabrikam/api/orders/newid').
+                        then(function (data) {
+                            $scope.orderId = data.data;
+                            afterOrderId(row);
+
+                        }, function (data) {
+                            $window.alert("Error retrieving inventory from store.");
+                        });
+                }
+                else {
+                    afterOrderId(row);
+                }
+
+            }
+
+            function afterOrderId(row) {
                 // Ensure user enters valid non-negative integer.
                 while (row.Quantity != parseInt(row.Quantity, 10) || row.Quantity <= 0) {
                     row.Quantity = "";
@@ -62,24 +79,37 @@
                 $scope.cart_total = Number(cart_total_unformatted).toFixed(2);
                 $scope.cart = local_cart;
 
+                var orderItem = { 'ItemId': row.Id, 'Quantity': row.Quantity };
+
+                // Send data to Order Controller.
+                var promise = $http.post('/fabrikam/api/orders/' + $scope.orderId + '/orderitems', orderItem).
+                      then(function (response) {
+
+                          var orderId = response.data;
+
+                      }, function (response) {
+
+                          $window.alert("Error sending orders.");
+
+                      });
+
                 // Keep track of Id and Quantity to send back to order service.
-                $scope.order.push({ 'ItemId': row.Id, 'Quantity': row.Quantity });
+                $scope.order.push(orderItem);
 
                 // Set UI Quantity back to empty.
                 row.Quantity = "";
-
             }
 
             // Called after user enters email and selects Place Order.
             // Here's where you would store customer email if you wanted to.
-            $scope.placeOrder = function (customerEmail) {
+            $scope.submitOrder = function (customerEmail) {
 
                 // Make sure to store orders so user can see persisted shopping cart on confirmation page. 
                 $cookies.putObject('orderPlaced', local_cart);
                 $cookies.put('orderTotal', $scope.cart_total);
 
                 // Send data to Order Controller.
-                var promise = $http.post('/fabrikam/api/orders', $scope.order).
+                var promise = $http.post('/fabrikam/api/orders/' + $scope.orderId, { }).
                       then(function (response) {
                           // Store returned orderId.
                           //$cookies.put('orderId', response.data);

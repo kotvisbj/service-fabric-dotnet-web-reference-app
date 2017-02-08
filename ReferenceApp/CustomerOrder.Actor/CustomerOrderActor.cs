@@ -41,11 +41,12 @@ namespace CustomerOrder.Actor
         /// </summary>
         /// <param name="orderList"></param>
         /// <returns></returns>
-        public async Task SubmitOrderAsync(IEnumerable<CustomerOrderItem> orderList)
+        public async Task SubmitOrderAsync()
         {
+            List<CustomerOrderItem> existingList = default(List<CustomerOrderItem>);
             try
             {
-                await this.StateManager.SetStateAsync<List<CustomerOrderItem>>(OrderItemListPropertyName, new List<CustomerOrderItem>(orderList));
+                existingList = await this.StateManager.GetStateAsync<List<CustomerOrderItem>>(OrderItemListPropertyName);
                 await this.StateManager.SetStateAsync<CustomerOrderStatus>(OrderStatusPropertyName, CustomerOrderStatus.Submitted);
 
                 await this.RegisterReminderAsync(
@@ -59,7 +60,25 @@ namespace CustomerOrder.Actor
                 ActorEventSource.Current.Message(e.ToString());
             }
 
-            ActorEventSource.Current.Message("Order submitted with {0} items", orderList.Count());
+            ActorEventSource.Current.Message("Order submitted with {0} items", existingList.Count());
+
+            return;
+        }
+
+        public async Task AddItemToOrderAsync(CustomerOrderItem orderItem)
+        {
+            try
+            {
+                var existingList = await this.StateManager.GetStateAsync<List<CustomerOrderItem>>(OrderItemListPropertyName);
+                existingList.Add(orderItem);
+                await this.StateManager.SetStateAsync<List<CustomerOrderItem>>(OrderItemListPropertyName, existingList);
+            }
+            catch (Exception e)
+            {
+                ActorEventSource.Current.Message(e.ToString());
+            }
+
+            ActorEventSource.Current.Message("Order item was added");
 
             return;
         }

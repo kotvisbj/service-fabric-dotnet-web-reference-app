@@ -36,24 +36,20 @@ namespace Web.Service.Controllers
         /// <param name="cart"></param>
         /// <returns>Guid to identify the order and allow for status look-up later.</returns>
         [HttpPost]
-        [Route("api/orders")]
-        public async Task<Guid> PostCheckout(List<CustomerOrderItem> cart)
+        [Route("api/orders/{orderId}")]
+        public async Task<Guid> PostCheckout(string orderId)
         {
-            ServiceEventSource.Current.Message("Now printing cart for POSTCHECKOUT...");
-            foreach (CustomerOrderItem item in cart)
-            {
-                ServiceEventSource.Current.Message("Guid {0}, quantity {1}", item.ItemId.ToString(), item.Quantity.ToString());
-            }
+            ServiceEventSource.Current.Message("Now printing cart for POSTCHECKOUT...");        
 
-            Guid orderId = Guid.NewGuid();
+            Guid orderIdGuid = Guid.Parse(orderId);
             ServiceUriBuilder builder = new ServiceUriBuilder(CustomerOrderServiceName);
 
             //We create a unique Guid that is associated with a customer order, as well as with the actor that represents that order's state.
-            ICustomerOrderActor customerOrder = ActorProxy.Create<ICustomerOrderActor>(new ActorId(orderId), builder.ToUri());
+            ICustomerOrderActor customerOrder = ActorProxy.Create<ICustomerOrderActor>(new ActorId(orderIdGuid), builder.ToUri());
 
             try
             {
-                await customerOrder.SubmitOrderAsync(cart);
+                await customerOrder.SubmitOrderAsync();
                 ServiceEventSource.Current.Message("Customer order submitted successfully. ActorOrderID: {0} created", orderId);
             }
             catch (InvalidOperationException ex)
@@ -67,7 +63,14 @@ namespace Web.Service.Controllers
                 throw;
             }
 
-            return orderId;
+            return orderIdGuid;
+        }
+          
+        [HttpGet]
+        [Route("api/orders/newid")]
+        public Task<Guid> GetNewId()
+        {
+            return Task.FromResult(Guid.NewGuid());
         }
 
         /// <summary>
