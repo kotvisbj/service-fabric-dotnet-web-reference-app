@@ -43,7 +43,7 @@ namespace CustomerOrder.Actor
         /// <returns></returns>
         public async Task SubmitOrderAsync()
         {
-            List<CustomerOrderItem> existingList = default(List<CustomerOrderItem>);
+            List<CustomerOrderItem> existingList = new List<CustomerOrderItem>();
             try
             {
                 existingList = await this.StateManager.GetStateAsync<List<CustomerOrderItem>>(OrderItemListPropertyName);

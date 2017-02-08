@@ -71,7 +71,6 @@ namespace CustomerOrder.UnitTests
             {
                 new CustomerOrderItem(new InventoryItemId(), 4)
             });
-
             await target.FulfillOrderAsync();
 
             Assert.AreEqual<CustomerOrderStatus>(CustomerOrderStatus.Shipped, await target.StateManager.GetStateAsync<CustomerOrderStatus>(OrderStatusPropertyName));
